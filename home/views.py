@@ -1,10 +1,10 @@
 from django.db.models import Q
 from django.shortcuts import render
 from products.models import Product, Category
-from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+import logging
 
-# Create your views here.
-
+# Create logger for monitoring firewall payloads
+logger = logging.getLogger("WAF_TEST")
 
 def index(request):
     query = Product.objects.all()
@@ -13,7 +13,7 @@ def index(request):
     selected_category = request.GET.get('category')
 
     if selected_category:
-        query = query.filter(category__category_name=selected_category)
+        query = query.filter(category__category_name__icontains=selected_category)
 
     if selected_sort:
         if selected_sort == 'newest':
@@ -23,20 +23,8 @@ def index(request):
         elif selected_sort == 'priceDesc':
             query = query.order_by('-price')
 
-    page = request.GET.get('page', 1)
-    paginator = Paginator(query, 20)
-
-    try:
-        products = paginator.page(page)
-    except PageNotAnInteger:
-        products = paginator.page(1)
-    except EmptyPage:
-        products = paginator.page(paginator.num_pages)
-    except Exception as e:
-        print(e)
-
     context = {
-        'products': products,
+        'products': query,
         'categories': categories,
         'selected_category': selected_category,
         'selected_sort': selected_sort,
@@ -47,29 +35,32 @@ def index(request):
 def product_search(request):
     query = request.GET.get('q', '')
 
-    if query:
-        # Search for products that contain the query string in their product_name field
-        products = Product.objects.filter(Q(product_name__icontains=query) | Q(
-            product_name__istartswith=query))
-    else:
-        products = Product.objects.none()
+    # Log raw payload for WAF monitoring
+    logger.warning(f"[WAF TEST PAYLOAD] => {query}")
 
-    context = {'query': query, 'products': products}
-    return render(request, 'home/search.html', context)
+    # Search logic (still works normally)
+    products = Product.objects.filter(
+        Q(product_name__icontains=query) |
+        Q(category__category_name__icontains=query) |
+        Q(size_variant__size_name__icontains=query) |
+        Q(color_variant__color_name__icontains=query)
+    ).distinct()
+
+    # return raw payload without escaping
+    return render(request, 'home/search.html', {
+        "query_raw": query,  # RAW payload for display
+        "products": products
+    })
 
 
 def contact(request):
-    context = {"form_id": "xgvvlrvn"}
-    return render(request, 'home/contact.html', context)
-
+    return render(request, 'home/contact.html')
 
 def about(request):
     return render(request, 'home/about.html')
 
-
 def terms_and_conditions(request):
     return render(request, 'home/terms_and_conditions.html')
-
 
 def privacy_policy(request):
     return render(request, 'home/privacy_policy.html')

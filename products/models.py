@@ -4,8 +4,6 @@ from django.utils.text import slugify
 from django.utils.html import mark_safe
 from django.contrib.auth.models import User
 
-# Create your models here.
-
 
 class Category(BaseModel):
     category_name = models.CharField(max_length=100)
@@ -16,7 +14,7 @@ class Category(BaseModel):
         self.slug = slugify(self.category_name)
         super(Category, self).save(*args, **kwargs)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.category_name
 
 
@@ -24,7 +22,7 @@ class ColorVariant(BaseModel):
     color_name = models.CharField(max_length=100)
     price = models.IntegerField(default=0)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.color_name
 
 
@@ -33,7 +31,11 @@ class SizeVariant(BaseModel):
     price = models.IntegerField(default=0)
     order = models.IntegerField(default=0)
 
-    def __str__(self) -> str:
+    class Meta:
+        ordering = ['order']
+        unique_together = ('size_name',)  # Prevent duplicate size values
+
+    def __str__(self):
         return self.size_name
 
 
@@ -54,19 +56,20 @@ class Product(BaseModel):
         self.slug = slugify(self.product_name)
         super(Product, self).save(*args, **kwargs)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.product_name
 
     def get_product_price_by_size(self, size):
-        return self.price + SizeVariant.objects.get(size_name=size).price
+        variant = self.size_variant.filter(size_name=size).first()
+        if variant:
+            return self.price + variant.price
+        return self.price
 
     def get_rating(self):
-        total = sum(int(review['stars']) for review in self.reviews.values())
-
+        total = sum(int(review.stars) for review in self.reviews.all())
         if self.reviews.count() > 0:
             return total / self.reviews.count()
-        else:
-            return 0
+        return 0
 
 
 class ProductImage(BaseModel):
@@ -76,14 +79,20 @@ class ProductImage(BaseModel):
         max_length=500, default='https://via.placeholder.com/500')
 
     def img_preview(self):
-        return mark_safe(f'<img src="{self.image_url}" width="500"/>')
+        return mark_safe(f'<img src="{self.image_url}" width="200"/>')
+
+    def __str__(self):
+        return f"Image for {self.product.product_name}"
 
 
 class Coupon(BaseModel):
-    coupon_code = models.CharField(max_length=10)
+    coupon_code = models.CharField(max_length=10, unique=True)
     is_expired = models.BooleanField(default=False)
     discount_amount = models.IntegerField(default=100)
     minimum_amount = models.IntegerField(default=500)
+
+    def __str__(self):
+        return self.coupon_code
 
 
 class ProductReview(BaseModel):
@@ -106,19 +115,22 @@ class ProductReview(BaseModel):
     def dislike_count(self):
         return self.dislikes.count()
 
+    def __str__(self):
+        return f"{self.product.product_name} - {self.stars} Stars"
+
 
 class Wishlist(BaseModel):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="wishlist")
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="wishlisted_by")
-    size_variant = models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True,
-                                     blank=True, related_name="wishlist_items")
+    size_variant = models.ForeignKey(
+        SizeVariant, on_delete=models.SET_NULL, null=True, blank=True, related_name="wishlist_items")
 
     added_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'product', 'size_variant')
 
-    def __str__(self) -> str:
-        return f'{self.user.username} - {self.product.product_name} - {self.size_variant.size_name if self.size_variant else "No Size"}'
+    def __str__(self):
+        return f"{self.user.username} - {self.product.product_name} - {self.size_variant if self.size_variant else 'No Size'}"

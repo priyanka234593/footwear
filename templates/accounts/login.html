@@ -1,53 +1,57 @@
-{% extends "base/base.html" %} {% load static %} {% load socialaccount %} 
-{% block title %}Login{% endblock %}
-{% block start %}
+{% extends "base/base.html" %}
+{% load static %}
 
-<!-- ============================ COMPONENT LOGIN   ================================= -->
+{% block title %}Login{% endblock %}
+
+{% block start %}
 <section class="section-content padding-bottom">
   <div class="container-xl d-flex justify-content-center align-items-center mt-5">
     <div class="row justify-content-center w-100">
       <div class="col-xl-4">
         <div class="card mb-4">
-          <div class="card-header" style="text-align: center; font-size: 25px">
+          <div class="card-header text-center" style="font-size: 25px;">
             Sign In
           </div>
+
           <div class="card-body">
             <form method="POST" action="{% url 'login' %}?next={{ request.GET.next }}">
-              {% csrf_token %} {% include "base/alert.html" %}
+              {% csrf_token %}
+              {% include "base/alert.html" %}
 
+              <!-- Username -->
               <div class="form-group">
                 <input
-                  class="form-control"
-                  required
-                  placeholder="Username"
-                  name="username"
                   type="text"
+                  name="username"
+                  placeholder="Username"
+                  required
+                  class="form-control"
                   autocomplete="username"
                 />
               </div>
-              <!-- form-group// -->
+
+              <!-- Password -->
               <div class="form-group">
                 <input
-                  class="form-control"
-                  required
-                  placeholder="Password"
-                  name="password"
                   type="password"
+                  name="password"
+                  placeholder="Password"
+                  required
+                  class="form-control"
                 />
               </div>
-              <!-- form-group// -->
 
-              <div class="form-group">
-                <a href="{% url 'password_reset' %}" class="float-right">
-                  Forgot password?
-                </a>
-                <label class="float-left custom-control custom-checkbox">
-                  <input type="checkbox" class="custom-control-input" checked/>
-                  <div class="custom-control-label">Remember</div>
+              <!-- Remember + Forgot -->
+              <div class="form-group d-flex justify-content-between">
+                <label class="custom-control custom-checkbox">
+                  <input type="checkbox" checked class="custom-control-input" />
+                  <span class="custom-control-label">Remember</span>
                 </label>
+
+                <a href="{% url 'password_reset' %}">Forgot password?</a>
               </div>
 
-              <!-- form-group// -->
+              <!-- Submit -->
               <div class="form-group">
                 <button type="submit" class="btn btn-primary btn-block">
                   Login
@@ -55,10 +59,20 @@
               </div>
 
               <p class="text-center mt-4">
-                Don't have account? <a href="{% url 'register' %}">Sign up</a>
+                Don't have an account?
+                <a href="{% url 'register' %}">Sign up</a>
               </p>
 
               <div class="line"></div>
+
+              <!-- Social Login Disabled -->
+              {% comment %}
+              <div class="media-options">
+                <a href="{% provider_login_url 'google' %}" class="field google">
+                  <img src="{% static 'images/google.png' %}" class="google-img" alt="Google" />
+                  <span>Login with Google</span>
+                </a>
+              </div>
 
               <div class="media-options">
                 <a href="{% provider_login_url 'facebook' %}" class="field facebook">
@@ -66,20 +80,14 @@
                   <span>Login with Facebook</span>
                 </a>
               </div>
-
-              <div class="media-options">
-                <a href="{% provider_login_url 'google' %}?next=/" class="field google">
-                  <img src="{% static 'images/google.png' %}" alt="" class="google-img"/>
-                  <span>Login with Google</span>
-                </a>
-              </div>
+              {% endcomment %}
+              <!-- End Disabled -->
             </form>
           </div>
+
         </div>
       </div>
     </div>
   </div>
 </section>
-<!-- ============================ COMPONENT LOGIN END ================================= -->
-
 {% endblock %}

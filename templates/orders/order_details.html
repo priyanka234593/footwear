@@ -1,0 +1,23 @@
+{% extends 'base/base.html' %}
+{% block title %}Order Details{% endblock %}
+{% block start %}
+
+<div class="container mt-5">
+    <h2>Your Order: {{ order.order_id }}</h2>
+    <hr>
+
+    <p><strong>Status:</strong> {{ order.order_status }}</p>
+    <p><strong>Total:</strong> ₹{{ order.total }}</p>
+    <p><strong>Date:</strong> {{ order.created_at }}</p>
+
+    <h4 class="mt-4">Items:</h4>
+    <ul>
+        {% for item in order.order_items.all %}
+            <li>{{ item.product.product_name }} (Size: {{ item.size }}) — Qty: {{ item.quantity }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'order_history' %}" class="btn btn-primary mt-3">Back to Orders</a>
+</div>
+
+{% endblock %}

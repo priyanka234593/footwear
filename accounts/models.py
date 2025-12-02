@@ -123,3 +123,16 @@ class OrderItem(BaseModel):
             quantity=self.quantity
         )
         return cart_item.get_product_price()
+    
+class UserActivity(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip = models.CharField(max_length=100, null=True, blank=True)
+    action = models.CharField(max_length=200)
+    page_url = models.CharField(max_length=500, null=True, blank=True)
+    raw_input = models.TextField(null=True, blank=True)
+    threat_score = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user} - {self.action} - {self.timestamp}"
+

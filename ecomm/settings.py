@@ -48,7 +48,7 @@ INSTALLED_APPS = [
 
     # Apps
     'products',
-    'accounts',
+    'accounts.apps.AccountsConfig',
     'home',
 
     # Django Social Auth Configurations
@@ -56,8 +56,8 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',  # For Google authentication
-    'allauth.socialaccount.providers.facebook',  # For Facebook authentication
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
 
     # for crispy forms
     'django_countries',
@@ -118,6 +118,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'accounts.middleware.UniversalTrackingMiddleware',
 ]
 
 ROOT_URLCONF = 'ecomm.urls'
@@ -187,10 +188,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = "/static/"
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "public/media")]
+STATICFILES_DIRS = [
+    BASE_DIR / "static"   # <-- Our frontend assets folder
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"  # Used for collectstatic (production build)
+
 
 # Media files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'public/media')
@@ -230,5 +236,5 @@ LOGOUT_REDIRECT_URL = "/"
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
-DEFAULT_DOMAIN = '127.0.0.1:8000'
+DEFAULT_DOMAIN = '127.0.0.1:3000'
 DEFAULT_HTTP_PROTOCOL = 'http'

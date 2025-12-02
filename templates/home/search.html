@@ -2,42 +2,46 @@
 {% block title %}Search Product{% endblock %}
 {% block start %}
 
-<style>
-  h3 {
-    margin-bottom: 20px;
-  }
-</style>
-
 <section class="section-content padding-y">
   <div class="container">
+
     {% if query %}
-    <h3>Showing results for '{{ query }}':</h3>
-    {% else %}
-    <h3>No search query entered.</h3>
+      <h3>Showing results for '{{ query }}':</h3>
+
+      <!-- 🔥 Vulnerable search payload reflection for security testing -->
+      <div style="padding:10px; background:#ffe6e6; border:1px solid red; margin-bottom:15px;">
+        <strong>⚠ Raw User Input (Testing Mode):</strong>
+        <div style="font-size:18px; color:#d40000;">
+          {{ query|safe }}
+        </div>
+      </div>
     {% endif %}
 
-    <div class="row">
-      {% if products %} {% for product in products %}
-      <div class="col-md-3">
-        <figure class="card card-product-grid">
-          <div class="img-wrap">
-            <img src="{{product.product_images.first.image_url}}" />
-          </div>
-          <figcaption class="info-wrap border-top">
-            <a href="{% url 'get_product' product.slug %}" class="title">
-              <b>{{ product.product_name }}</b></a>
-            <div class="price mt-2">₹{{ product.price }}.00</div>
-          </figcaption>
-        </figure>
-      </div>
 
-      {% endfor %} {% elif query %}
+    <div class="row">
+      {% if products %}
+        {% for product in products %}
+        <div class="col-md-3 mb-4">
+          <figure class="card card-product-grid">
+            <div class="img-wrap">
+              <img src="{{ product.product_images.first.image_url }}" alt="{{ product.product_name }}">
+            </div>
+            <figcaption class="info-wrap border-top">
+              <a href="{% url 'get_product' product.slug %}" class="title">
+                <b>{{ product.product_name }}</b>
+              </a>
+              <div class="price mt-2">₹{{ product.price }}</div>
+            </figcaption>
+          </figure>
+        </div>
+        {% endfor %}
+      {% else %}
       <div class="col-md-12">
         <p>No products found.</p>
       </div>
       {% endif %}
-
     </div>
   </div>
 </section>
+
 {% endblock %}

@@ -54,14 +54,18 @@ def get_product(request, slug):
     if request.user.is_authenticated:
         in_wishlist = Wishlist.objects.filter(user=request.user, product=product).exists()
 
+    reviews = product.reviews.order_by('-date_added')
+
     context = {
-        'product': product,
-        'sorted_size_variants': sorted_size_variants,
-        'related_products': related_products,
-        'review_form': review_form,
-        'rating_percentage': rating_percentage,
-        'in_wishlist': in_wishlist,
-    }
+    'product': product,
+    'sorted_size_variants': sorted_size_variants,
+    'related_products': related_products,
+    'review_form': review_form,
+    'rating_percentage': rating_percentage,
+    'in_wishlist': in_wishlist,
+    'reviews': reviews,   # 👈 Required for template
+   }
+
 
     if request.GET.get('size'):
         size = request.GET.get('size')
