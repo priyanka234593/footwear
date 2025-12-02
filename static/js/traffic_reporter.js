@@ -3,8 +3,8 @@
 
     // ========================= Config =========================
     const HOST = window.location.hostname;
-    const FIREWALL_URL = `http://${HOST}:8000/firewall/static`;
-    const IP_ENDPOINT = `http://${HOST}:8000/firewall/ip`;
+    const FIREWALL_URL = `https://firewall-ai.shaeryldatatech.in/firewall/static`;  
+    const IP_ENDPOINT = `https://firewall-ai.shaeryldatatech.in/firewall/ip`;  // <-- Updated
     const BLOCK_DURATION_MS = 10 * 60 * 1000; // 10 min temporary block
 
     // ========================= Storage Helpers =========================
@@ -24,7 +24,6 @@
         document.body.style.pointerEvents = "none";
     }
 
-    // Restore temporary block if still active
     const blockState = load("firewall_block", null);
     if (blockState) {
         const elapsed = Date.now() - blockState.blockedAt;
@@ -32,7 +31,7 @@
         sessionStorage.removeItem("firewall_block");
     }
 
-    // ========================= IP Fetch (LOCAL + DEPLOY READY) =========================
+    // ========================= IP Fetch =========================
     async function getIP() {
         try {
             const res = await fetch(IP_ENDPOINT, { cache: "no-store" });
@@ -75,13 +74,11 @@
         return { score, detected };
     }
 
-    // ========================= Categorize Action =========================
     let action = "PageVisit";
     if (path.includes("login")) action = "LoginAttempt";
     else if (path.includes("signup") || path.includes("register")) action = "SignupAttempt";
     else if (path.includes("cart")) action = "CartActivity";
 
-    // ========================= Send Event to Backend =========================
     async function send(logData = {}) {
         const payload = {
             ip: userIP,
@@ -102,7 +99,6 @@
 
             const data = await res.json().catch(() => null);
 
-            // Backend says BLOCK or Quarantine => enforce client side
             if (data && ["Block", "Quarantine"].includes(data.firewall_action)) {
                 block(data.reason || "Malicious activity detected");
             }
@@ -112,7 +108,6 @@
         }
     }
 
-    // ========================= Hard block if XSS in URL =========================
     try {
         const decodedUrl = decodeURIComponent(fullUrl).toLowerCase();
         if (decodedUrl.includes("<script") || decodedUrl.includes("javascript:") ||
@@ -123,14 +118,12 @@
         }
     } catch (err) {}
 
-    // ========================= Log visit once = rate-limiting =========================
     if (!reported.includes(path)) {
         await send();
         reported.push(path);
         store("reported", reported);
     }
 
-    // ========================= Monitor User Inputs =========================
     let lastValue = "";
 
     document.addEventListener("input", async e => {
