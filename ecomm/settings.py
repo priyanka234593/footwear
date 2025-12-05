@@ -9,35 +9,33 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", cast=bool, default=True)
 
 # ---------------------------------------
-# ALLOWED HOSTS / DOMAIN SETUP
+# HOSTS / CORS
 # ---------------------------------------
-ALLOWED_HOSTS = config(
-    "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,firewall.shaeryldatatech.in"
-).split(",")
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
     "https://firewall.shaeryldatatech.in",
     "http://firewall.shaeryldatatech.in",
-    "http://127.0.0.1:3000",
-    "http://localhost:3000"
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True   # Optional but helpful for frontend testing
-
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+CORS_ALLOW_ALL_ORIGINS = True
 
 
+# ---------------------------------------
+# BASE URL FOR EMAIL LINKS
+# ---------------------------------------
 BASE_URL = config("BASE_URL", default="http://127.0.0.1:3000")
 
 
 # ---------------------------------------
-# APPS
+# INSTALLED APPS
 # ---------------------------------------
-SITE_ID = 3
+SITE_ID = 1  # use 1 unless you customized admin
 
 INSTALLED_APPS = [
+    # Django default
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,10 +43,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'products',
-    'accounts.apps.AccountsConfig',
-    'home',
+    # Third-party
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'crispy_forms',
+    'crispy_bootstrap4',
+    'django_countries',
+    'corsheaders',
 
+    # Auth system
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -56,9 +59,10 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
 
-    'django_countries',
-    'crispy_forms',
-    'crispy_bootstrap4',
+    # Custom apps
+    'products',
+    'accounts.apps.AccountsConfig',
+    'home',
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
@@ -71,30 +75,13 @@ SOCIAL_AUTH_FACEBOOK_KEY = config('SOCIAL_AUTH_FACEBOOK_KEY', default=None)
 SOCIAL_AUTH_FACEBOOK_SECRET = config('SOCIAL_AUTH_FACEBOOK_SECRET', default=None)
 
 
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"}
-    },
-    "facebook": {
-        'APP': {
-            'client_id': SOCIAL_AUTH_FACEBOOK_KEY,
-            'secret': SOCIAL_AUTH_FACEBOOK_SECRET,
-        },
-        'METHOD': 'oauth2',
-        'SCOPE': ['email', 'public_profile'],
-        'VERIFIED_EMAIL': False,
-        'VERSION': 'v17.0',
-    }
-}
-
-
 # ---------------------------------------
 # MIDDLEWARE
 # ---------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # must be above CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -127,6 +114,7 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'ecomm.wsgi.application'
 
 
@@ -142,7 +130,7 @@ DATABASES = {
 
 
 # ---------------------------------------
-# PASSWORD POLICY
+# PASSWORD VALIDATION
 # ---------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -184,7 +172,7 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 # ---------------------------------------
-# AUTH CONFIG
+# AUTH SETTINGS
 # ---------------------------------------
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",
@@ -197,7 +185,11 @@ LOGOUT_REDIRECT_URL = "/"
 
 
 # ---------------------------------------
-# EXTRA SETTINGS
+# DRF & JWT CONFIG
 # ---------------------------------------
-DEFAULT_DOMAIN = 'firewall.shaeryldatatech.in'
-DEFAULT_HTTP_PROTOCOL = 'https'
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
