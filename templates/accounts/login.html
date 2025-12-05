@@ -8,86 +8,135 @@
   <div class="container-xl d-flex justify-content-center align-items-center mt-5">
     <div class="row justify-content-center w-100">
       <div class="col-xl-4">
+
         <div class="card mb-4">
           <div class="card-header text-center" style="font-size: 25px;">
             Sign In
           </div>
 
           <div class="card-body">
-            <form method="POST" action="{% url 'login' %}?next={{ request.GET.next }}">
-              {% csrf_token %}
-              {% include "base/alert.html" %}
 
-              <!-- Username -->
+            <form id="loginForm">
+              {% csrf_token %}
+
+              <!-- Email / Username -->
               <div class="form-group">
-                <input
-                  type="text"
-                  name="username"
-                  placeholder="Username"
-                  required
+                <input 
                   class="form-control"
-                  autocomplete="username"
+                  type="text"
+                  id="email"
+                  placeholder="Email or Username"
+                  required
                 />
               </div>
 
               <!-- Password -->
-              <div class="form-group">
-                <input
+              <div class="form-group mt-3">
+                <input 
+                  class="form-control"
                   type="password"
-                  name="password"
+                  id="password"
                   placeholder="Password"
                   required
-                  class="form-control"
                 />
               </div>
 
-              <!-- Remember + Forgot -->
-              <div class="form-group d-flex justify-content-between">
-                <label class="custom-control custom-checkbox">
-                  <input type="checkbox" checked class="custom-control-input" />
-                  <span class="custom-control-label">Remember</span>
-                </label>
-
-                <a href="{% url 'password_reset' %}">Forgot password?</a>
-              </div>
-
-              <!-- Submit -->
-              <div class="form-group">
-                <button type="submit" class="btn btn-primary btn-block">
+              <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary btn-block w-100">
                   Login
                 </button>
               </div>
 
               <p class="text-center mt-4">
                 Don't have an account?
-                <a href="{% url 'register' %}">Sign up</a>
+                <a href="{% url 'register' %}">Register</a>
               </p>
 
-              <div class="line"></div>
+              <p class="text-center">
+                <a href="{% url 'forgot_password' %}">Forgot Password?</a>
+              </p>
 
-              <!-- Social Login Disabled -->
-              {% comment %}
-              <div class="media-options">
-                <a href="{% provider_login_url 'google' %}" class="field google">
-                  <img src="{% static 'images/google.png' %}" class="google-img" alt="Google" />
-                  <span>Login with Google</span>
-                </a>
-              </div>
-
-              <div class="media-options">
-                <a href="{% provider_login_url 'facebook' %}" class="field facebook">
-                  <i class="bx bxl-facebook facebook-icon"></i>
-                  <span>Login with Facebook</span>
-                </a>
-              </div>
-              {% endcomment %}
-              <!-- End Disabled -->
             </form>
-          </div>
 
+          </div>
         </div>
+
       </div>
     </div>
   </div>
 </section>
+
+
+<!-- 🚨 Toast Notification -->
+<div class="toast align-items-center text-bg-success border-0" 
+     id="toastElement" role="alert" aria-live="assertive" aria-atomic="true"
+     style="position: fixed; bottom: 20px; right: 20px; z-index: 2000;">
+  <div class="d-flex">
+    <div class="toast-body" id="toastMessage">
+      Notification message
+    </div>
+    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+  </div>
+</div>
+
+
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const payload = {
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value,
+    };
+
+    try {
+        const response = await fetch("/api/accounts/login/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            // 🟢 STORE TOKENS
+            localStorage.setItem("access_token", data.access);
+            localStorage.setItem("refresh_token", data.refresh);
+
+            showToast("🎉 Login successful!", "success");
+
+            setTimeout(() => {
+                window.location.href = "/";
+            }, 1500);
+
+        } else {
+            showToast(data.detail || "Invalid login details", "danger");
+        }
+
+    } catch (error) {
+        showToast("Network error: " + error, "danger");
+    }
+});
+
+
+// 🔔 Toast Function
+function showToast(message, type = "success") {
+    const toast = document.getElementById("toastElement");
+    const toastMsg = document.getElementById("toastMessage");
+
+    toast.classList.remove("text-bg-success", "text-bg-danger");
+    toast.classList.add(type === "success" ? "text-bg-success" : "text-bg-danger");
+
+    toastMsg.innerHTML = message;
+
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+</script>
+
 {% endblock %}
